@@ -9,7 +9,7 @@ VAR.size_for_average = 3; % размер квадратного усредняющего фильтра
 
 % бинаризация 
 VAR.Sens = 0.9; % чувствительность в бинаризации
-% VAR.Sens = 0.7; % чувствительность в бинаризации
+% VAR.Sens = 0.99; % чувствительность в бинаризации
 VAR.gamma = 5; % параметр в преобразовании яркости - imadjust
 % VAR.k = 1; % счетoчик обработки
 image_binor =zeros(10,10); 
@@ -24,63 +24,64 @@ VAR.frame_period = 1/1000; % длительность кадра
 VAR.pixel_size = 8/791; %pixels per mm по умолчанию 
 
 % ПОТОКОВАЯ ОБРАБОТКА ВСЕГО ВИДЕО 
-% файл для разработки и отладки функции получения кадров из avi-файлаclc
-
-
+    
 % ТУТ ПИСАТЬ АДРЕСС ВИДЕО ДЛЯ ОБРАБОТКИ
 VAR.FileName = 'C:\Users\idobr\YandexDisk\3 НИР\7 семестр\12 Работа с видео\Эксперимент\4.avi';
-VAR.FileName = 'C:\Users\idobr\Desktop\финальный эксперимент\18.avi';
+VAR.FileName = 'C:\Users\idobr\Desktop\финальный эксперимент\1_1.avi';
 % VAR.FileName = 'C:\Users\idobr\Desktop\Видео от Марины Резниковой\2017_04_04\T_500_def.avi';
 % ------------------------------------------------------------------------
 Video = VideoReader(VAR.FileName); 
 k=1; 
 X = 0; Y = 0; 
-
+i = 0; 
 VAR = get_gamma_corr(VAR);
 
 while  hasFrame(Video) 
+    if mod(i,1) == 0 
 
-    image = readFrame(Video);
-    image_gray = rgb2gray(image);
-    
-    [resized_image,X,Y] = get_resized_image(image_gray, image_binor, X,Y, VAR); 
-    image_gray = resized_image;
-    
-    % aлгоритм 1 - два раза применяется усредняющий фильтр
-%     after_filtr = average_filter(image_gray,VAR);
-%     after_filtr = average_filter(after_filtr,VAR);
-    % алгорит 2 - без усреднения изображения
-    after_filtr = image_gray;
+        image = readFrame(Video);
+        image_gray = rgb2gray(image);
 
-    image_binor = binarization(after_filtr, VAR);
+        [resized_image,X,Y] = get_resized_image(image_gray, image_binor, X,Y, VAR); 
+        image_gray = resized_image;
 
-     image_binor = clear_image(image_binor);
+        % aлгоритм 1 - два раза применяется усредняющий фильтр
+    %     after_filtr = average_filter(image_gray,VAR);
+    %     after_filtr = average_filter(after_filtr,VAR);
+        % алгорит 2 - без усреднения изображения
+        after_filtr = image_gray;
+
+        image_binor = binarization(after_filtr, VAR);
+
+         image_binor = clear_image(image_binor);
 
 
-        boundary = plot_doundary(image_binor, after_filtr, 1);
-    % ЕСЛИ НУЖЕН ВЫВОД ГРАНИЦЫ НА КАЖДОМ КАДРЕ, ТО ЗАМЕНИТЬ 0 НА 1
+            boundary = plot_doundary(image_binor, after_filtr, 0);
+        % ЕСЛИ НУЖЕН ВЫВОД ГРАНИЦЫ НА КАЖДОМ КАДРЕ, ТО ЗАМЕНИТЬ 0 НА 1
 
-    
-        % АЛГОРИТМ 2 - АПРОКСИМАЦИЯ ЭЛЛИПСОМ
-    [X_boundary,Y_boundary] = get_boundary_coordinates(boundary);
-    
-    ell = detect_ellipse(X_boundary, Y_boundary);
-    Deformtion_from_ell_aprox(k) = 100*(ell.a - ell.b)/(ell.a + ell.b);
-    Volume_from_ell_aprox(k) = 4/3*pi*ell.b^2*ell.a*VAR.pixel_size^3;
-    
-    [half_axis_big, half_axis_small] = get_axis(image_binor);
 
-        % условие на неразрывность деформации
-        if half_axis_small>0
-                hor_ax_small(k) = half_axis_small;
-                vert_ax_big(k) = half_axis_big;
-        else
-                hor_ax_small(k) = hor_ax_small(k-1);
-                vert_ax_big(k) = vert_ax_big(k-1);
-        end
-                VAR.volume(k) = 4/3*pi*half_axis_small^2*half_axis_big*VAR.pixel_size^3;
-                
-    k= k+1; 
+            % АЛГОРИТМ 2 - АПРОКСИМАЦИЯ ЭЛЛИПСОМ
+        [X_boundary,Y_boundary] = get_boundary_coordinates(boundary);
+
+        ell = detect_ellipse(X_boundary, Y_boundary);
+        Deformtion_from_ell_aprox(k) = 100*(ell.a - ell.b)/(ell.a + ell.b);
+        Volume_from_ell_aprox(k) = 4/3*pi*ell.b^2*ell.a*VAR.pixel_size^3;
+
+        [half_axis_big, half_axis_small] = get_axis(image_binor);
+
+            % условие на неразрывность деформации
+            if half_axis_small>0
+                    hor_ax_small(k) = half_axis_small;
+                    vert_ax_big(k) = half_axis_big;
+            else
+                    hor_ax_small(k) = hor_ax_small(k-1);
+                    vert_ax_big(k) = vert_ax_big(k-1);
+            end
+                    VAR.volume(k) = 4/3*pi*half_axis_small^2*half_axis_big*VAR.pixel_size^3;
+
+        k= k+1; 
+    end
+    i = i + 1; 
 end
 %%
 VAR = get_deformation(hor_ax_small, vert_ax_big, VAR); 
@@ -103,45 +104,7 @@ plot(VAR.time, VAR.R)
 figure
 plot(VAR.time, hor_ax_small, VAR.time,vert_ax_big)
 
-%% БЛОК ИНИАЦЛИЗАЦИИ ОКОН ДЛЯ НАСТРОЙКИ ПАРАМЕТРОВ ОБРАБОТКИ
 
-% загрузка двух изображений из файла с видео
-image_first = get_frame(VAR, 'first');
-image_last = get_frame( VAR, 'last');
-
-% первичная обработка - получения обрезанного изображения 
-image_first = take_the_intial_processing(image_first, VAR); % вызов функции
-image_last = take_the_intial_processing(image_last, VAR);
-
-%% ЧАСТЬ ИСПОЛНЯЕМАЯ ПОСЛЕ ИЗМЕНЕНИЯ НАСТРОЕК БИНАРИЗАЦИИ
-    % скорее всего нужно переписывать функцию вывода в окно в приложении
-    % первое изображение
-    image_binor_first = binarization(image_first, VAR);
-    image_binor_first = clear_image(image_binor_first);
-    boundary = plot_doundary(image_binor_first, image_gray_first, 1);
-    % второе изображение
-    image_binor_last = binarization(image_last, VAR);
-    image_binor_last = clear_image(image_binor_last);
-    boundary = plot_doundary(image_binor_last, image_gray_last, 1);   
-
-%%
-function [image_output] =   take_the_intial_processing(image_input, VAR)
-    X = 0; Y = 0;
-    image_gray = rgb2gray(image_input);
-    [image_gray, X, Y] = get_resized_image(image_gray, image_binor, X, Y, VAR);
-    after_filtr = average_filter(image_gray, VAR);
-    image_binor = binarization(after_filtr, VAR);
-    image_binor = clear_image(image_binor);
-    boundary = plot_doundary(image_binor, image_gray, 0);
-    % второй проход по изображению 
-    [image_gray,X,Y] = get_resized_image(image_gray, image_binor, X, Y, VAR);
-    after_filtr = average_filter(image_gray, VAR);
-    image_binor = binarization(after_filtr, VAR);
-    image_binor = clear_image(image_binor);
-    boundary = plot_doundary(image_binor, image_gray, 1);
-    
-    image_output = image_binor;
-    end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ФУНКЦИИ
@@ -244,20 +207,20 @@ function image_binar = binarization(image, VAR)
     b=im2double(image);   
     
     
-    n = 2;  
-    avg = mean2(b); % Average of matrix elements
-    sigma = std2(b); % Standard deviation of matrix elements
-    VAR.gamma_correction = [avg-n*sigma avg+n*sigma];
+%     n = 2;  
+%     avg = mean2(b); % Average of matrix elements
+%     sigma = std2(b); % Standard deviation of matrix elements
+%     VAR.gamma_correction = [avg-n*sigma avg+n*sigma];
 
     %преобразование интенсивностей
-    b = imadjust(b,VAR.gamma_correction,[]); % автоматический выбор настройки
-     b=imadjust(b,[0 0.5],[],VAR.gamma); % ручная настройка
+%     b = imadjust(b,VAR.gamma_correction,[]); % автоматический выбор настройки
+%      b=imadjust(b,[0 0.5],[],VAR.gamma); % ручная настройка
      
 %      imshow(b)
 %      pause(1)
     
     image_binar = imbinarize(b,'adaptive', 'Sensitivity', VAR.Sens, 'ForegroundPolarity','bright');
-    imshow(b)
+%     imshow(b)
     %     imshow( image_binar)
 %     pause(1)
 end 
@@ -265,6 +228,7 @@ end
 function image_binor = clear_image(image) 
 
     BW1 = edge(image,'Canny',0.15, 4); %выделение границ
+%     BW1 = edge(image,'Canny',0.1, 6); %выделение границ
 %     imshow(BW1)
 %     pause(1)
     
