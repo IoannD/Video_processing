@@ -3,7 +3,7 @@ clc
 close all
 %% »Ќ»÷»јЋ»«ј÷»я ѕ–ќ√–јћћџ 
 VAR.FileName = 'default name'; 
-VAR.frame_period = 1; % длительность по умолчанию
+VAR.frame_period = 1; % the duration of frame
 VAR.pixel_size = 1; 
 VAR.size_for_average = 3; % размер квадратного усредн€ющего фильтра 
 
