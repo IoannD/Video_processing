@@ -265,7 +265,7 @@ function [] = plot_volume(VAR)
     hold on
     
     referenceVolume = (4/3)*pi*VAR.Radius^3; 
-    relativeVolume = (referenceVolume - VAR.volume)/referenceVolume;
+    relativeVolume = 100*(referenceVolume - VAR.volume)/referenceVolume;
     plot(VAR.time,relativeVolume,'.-')
 end
 
