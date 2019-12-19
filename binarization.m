@@ -10,12 +10,14 @@ function image_binar = binarization(image, VAR)
 %     VAR.gamma_correction = [avg-n*sigma avg+n*sigma];
 
     %преобразование интенсивностей
-%     b = imadjust(b,VAR.gamma_correction,[]); % автоматический выбор настройки
-%      b=imadjust(b,[0 0.5],[],VAR.gamma); % ручная настройка
-     
-%      imshow(b)
-%      pause(1)
-    
+    if strcmp(VAR.method, 'constant')
+        b = imadjust(b,VAR.gamma_correction,[]); % автоматический выбор настройки
+    elseif strcmp(VAR.method, 'automatic')
+         b=imadjust(b,[0 0.5],[],VAR.gamma); % ручная настройка
+    end
+
+%         imshow(b) 
+
     image_binar = imbinarize(b,'adaptive', 'Sensitivity', VAR.Sens, 'ForegroundPolarity','bright');
 %     imshow(b)
     %     imshow( image_binar)

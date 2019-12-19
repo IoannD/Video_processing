@@ -1,11 +1,15 @@
 clear
 clc
 close all
+
 %% ÈÍÈÖÈÀËÈÇÀÖÈß ÏÐÎÃÐÀÌÌÛ 
 VAR.FileName = 'default name'; 
 VAR.frame_period = 1; % the duration of frame
 VAR.pixel_size = 1; 
 VAR.size_for_average = 3; % ðàçìåð êâàäðàòíîãî óñðåäíÿþùåãî ôèëüòðà 
+VAR.method = ('automatic');
+% VAR.method = ('constant');
+VAR.threshold = [0.15, 0.19];
 
 % áèíàðèçàöèÿ 
 VAR.Sens = 0.9; % ÷óâñòâèòåëüíîñòü â áèíàðèçàöèè
@@ -14,11 +18,10 @@ VAR.gamma = 5; % ïàðàìåòð â ïðåîáðàçîâàíèè ÿðêîñòè - imadjust
 % VAR.k = 1; % ñ÷åòo÷èê îáðàáîòêè
 image_binor =zeros(10,10); 
 % VAR.resize_parameter = 50; % âåëè÷èíà ðàñøèðåíèÿ ïðîìîóãîëüíîãî îêíà
-VAR.resize_parameter = 60; % âåëè÷èíà ðàñøèðåíèÿ ïðîìîóãîëüíîãî îêíà
+VAR.resize_parameter = 50; % âåëè÷èíà ðàñøèðåíèÿ ïðîìîóãîëüíîãî îêíà
 % â êîòîðîå ïîìåùàåòñÿ êàïëÿ - íåîáõîäèìî â "get_resized_image"
 X = 0; Y = 0; 
 
-time = 1; 
 
 VAR.frame_period = 1/1000; % äëèòåëüíîñòü êàäðà 
 VAR.pixel_size = 8/791; %pixels per mm ïî óìîë÷àíèþ 
@@ -26,20 +29,22 @@ VAR.pixel_size = 8/791; %pixels per mm ïî óìîë÷àíèþ
 % ÏÎÒÎÊÎÂÀß ÎÁÐÀÁÎÒÊÀ ÂÑÅÃÎ ÂÈÄÅÎ 
     
 % ÒÓÒ ÏÈÑÀÒÜ ÀÄÐÅÑÑ ÂÈÄÅÎ ÄËß ÎÁÐÀÁÎÒÊÈ
-VAR.FileName = 'C:\Users\idobr\YandexDisk\3 ÍÈÐ\7 ñåìåñòð\12 Ðàáîòà ñ âèäåî\Ýêñïåðèìåíò\4.avi';
-VAR.FileName = 'C:\Users\idobr\Desktop\ôèíàëüíûé ýêñïåðèìåíò\1_1.avi';
+VAR.FileName = 'C:\Users\idobr\YandexDisk\3 ÍÈÐ\7 ñåìåñòð\12 Ðàáîòà ñ âèäåî\Ýêñïåðèìåíò\5.avi';
+% VAR.FileName = 'C:\Users\idobr\Desktop\ôèíàëüíûé ýêñïåðèìåíò\1_1.avi';
 % VAR.FileName = 'C:\Users\idobr\Desktop\Âèäåî îò Ìàðèíû Ðåçíèêîâîé\2017_04_04\T_500_def.avi';
 % ------------------------------------------------------------------------
 Video = VideoReader(VAR.FileName); 
+% Video = VideoReader(VAR.FileName, 'CurrentTime', 23);
 k=1; 
 X = 0; Y = 0; 
-i = 0; 
+
 VAR = get_gamma_corr(VAR);
 
 while  hasFrame(Video) 
-    if mod(i,1) == 0 
+
 
         image = readFrame(Video);
+
         image_gray = rgb2gray(image);
 
         [resized_image,X,Y] = get_resized_image(image_gray, image_binor, X,Y, VAR); 
@@ -53,11 +58,12 @@ while  hasFrame(Video)
 
         image_binor = binarization(after_filtr, VAR);
 
-         image_binor = clear_image(image_binor);
+%          image_binor = clear_image(image_binor);
+        image_binor = clear_image_2(image_binor,VAR);
 
 
-            boundary = plot_doundary(image_binor, after_filtr, 0);
-        % ÅÑËÈ ÍÓÆÅÍ ÂÛÂÎÄ ÃÐÀÍÈÖÛ ÍÀ ÊÀÆÄÎÌ ÊÀÄÐÅ, ÒÎ ÇÀÌÅÍÈÒÜ 0 ÍÀ 1
+            boundary = plot_doundary(image_binor, after_filtr, 1);
+        % ÅÑËÈ ÍÓÆÅÍ ÂÛÂÎÄ ÃÐÀÍÈÖÛ ÍÀ ÊÀÆÄÎÌ ÊÀ ÄÐÅ, ÒÎ ÇÀÌÅÍÈÒÜ 0 ÍÀ 1
 
 
             % ÀËÃÎÐÈÒÌ 2 - ÀÏÐÎÊÑÈÌÀÖÈß ÝËËÈÏÑÎÌ
@@ -70,6 +76,7 @@ while  hasFrame(Video)
         [half_axis_big, half_axis_small] = get_axis(image_binor);
 
             % óñëîâèå íà íåðàçðûâíîñòü äåôîðìàöèè
+
             if half_axis_small>0
                     hor_ax_small(k) = half_axis_small;
                     vert_ax_big(k) = half_axis_big;
@@ -79,9 +86,8 @@ while  hasFrame(Video)
             end
                     VAR.volume(k) = 4/3*pi*half_axis_small^2*half_axis_big*VAR.pixel_size^3;
 
-        k= k+1; 
-    end
-    i = i + 1; 
+        k= k+1;
+
 end
 %%
 VAR = get_deformation(hor_ax_small, vert_ax_big, VAR); 
@@ -102,6 +108,10 @@ plot( VAR.time, 100*(-1)*(Volume_from_ell_aprox - referenceVolume)/referenceVolu
 figure
 plot(VAR.time, VAR.R)
 figure
-plot(VAR.time, hor_ax_small, VAR.time,vert_ax_big)
+plot(VAR.time, hor_ax_small,'b') 
+figure
+plot(VAR.time,vert_ax_big,'r')
 
+figure
+plot(VAR.time, 100*(max(VAR.volume)- VAR.volume)/max(VAR.volume))
 
