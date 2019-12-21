@@ -32,6 +32,7 @@ VAR.pixel_size = 8/791; %pixels per mm по умолчанию
 VAR.FileName = 'C:\Users\idobr\YandexDisk\3 НИР\7 семестр\12 Работа с видео\Эксперимент\5.avi';
 % VAR.FileName = 'C:\Users\idobr\Desktop\финальный эксперимент\1_1.avi';
 % VAR.FileName = 'C:\Users\idobr\Desktop\Видео от Марины Резниковой\2017_04_04\T_500_def.avi';
+VAR.FileName = 'C:\Users\idobr\Desktop\test kameri\test_fall_9.avi';
 % ------------------------------------------------------------------------
 Video = VideoReader(VAR.FileName); 
 % Video = VideoReader(VAR.FileName, 'CurrentTime', 23);
@@ -47,8 +48,8 @@ while  hasFrame(Video)
 
         image_gray = rgb2gray(image);
 
-        [resized_image,X,Y] = get_resized_image(image_gray, image_binor, X,Y, VAR); 
-        image_gray = resized_image;
+%         [resized_image,X,Y] = get_resized_image(image_gray, image_binor, X,Y, VAR); 
+%         image_gray = resized_image;
 
         % aлгоритм 1 - два раза применяется усредняющий фильтр
     %     after_filtr = average_filter(image_gray,VAR);
@@ -62,7 +63,7 @@ while  hasFrame(Video)
         image_binor = clear_image_2(image_binor,VAR);
 
 
-            boundary = plot_doundary(image_binor, after_filtr, 1);
+            boundary = plot_doundary(image_binor, after_filtr, 0);
         % ЕСЛИ НУЖЕН ВЫВОД ГРАНИЦЫ НА КАЖДОМ КА ДРЕ, ТО ЗАМЕНИТЬ 0 НА 1
 
 

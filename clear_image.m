@@ -1,5 +1,6 @@
 function image_binor = clear_image(image) 
 
+    
     BW1 = edge(image,'Canny',0.15, 4); %выделение границ
 %     BW1 = edge(image,'Canny',0.1, 6); %выделение границ
 %     imshow(BW1)
